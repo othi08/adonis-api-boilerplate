@@ -9,7 +9,7 @@ export default class ModuleMakeController extends BaseCommand {
   @args.string({ description: 'Module name' })
   declare module: string
 
-  @flags.string({ description: 'Controller name' })
+  @args.string({ description: 'Controller name' })
   declare name: string
 
   @flags.boolean({ description: 'Create resource controller' })
@@ -17,7 +17,7 @@ export default class ModuleMakeController extends BaseCommand {
 
   async run() {
     const moduleName = this.module
-    const controllerName = this.name || (await this.prompt.ask('Enter controller name'))
+    const controllerName = this.normalizeControllerName(this.name)
     const modulePath = this.app.makePath('src', 'modules', moduleName)
 
     const controllerContent = this.resource
@@ -150,5 +150,19 @@ export default class ${this.toPascalCase(name)} {
       .replace(/([A-Z])/g, '_$1')
       .toLowerCase()
       .replace(/^_/, '')
+  }
+
+  private normalizeControllerName(name: string): string {
+    if (!name) {
+      return name
+    }
+
+    // If the user already provided a name ending with "Controller", keep it
+    if (/Controller$/i.test(name)) {
+      return this.toPascalCase(name.replace(/Controller$/i, '')) + 'Controller'
+    }
+
+    // Otherwise, build a PascalCase name and append the suffix
+    return this.toPascalCase(name) + 'Controller'
   }
 }

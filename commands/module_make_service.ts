@@ -1,4 +1,4 @@
-import { BaseCommand, args, flags } from '@adonisjs/core/ace'
+import { BaseCommand, args } from '@adonisjs/core/ace'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -9,15 +9,25 @@ export default class ModuleMakeService extends BaseCommand {
   @args.string({ description: 'Module name' })
   declare module: string
 
-  @flags.string({ description: 'Service name' })
+  @args.string({ description: 'Service name' })
   declare name: string
 
   async run() {
     const moduleName = this.module
-    const serviceName = this.name || (await this.prompt.ask('Enter service name'))
+    const rawName = this.name
+    if (!rawName) {
+      this.logger.error(
+        'Service name is required. Example: node ace module:make:service inventory Product'
+      )
+      this.exitCode = 1
+      return
+    }
+
+    const baseName = this.normalizeServiceBase(rawName)
+    const className = `${baseName}Service`
     const modulePath = this.app.makePath('src', 'modules', moduleName)
 
-    const serviceContent = `export default class ${this.toPascalCase(serviceName)} {
+    const serviceContent = `export default class ${className} {
   /**
    * Service logic here
    */
@@ -27,11 +37,11 @@ export default class ModuleMakeService extends BaseCommand {
 }
 `
 
-    const servicePath = join(modulePath, 'services', `${this.toSnakeCase(serviceName)}.ts`)
+    const servicePath = join(modulePath, 'services', `${this.toSnakeCase(className)}.ts`)
 
     try {
       await writeFile(servicePath, serviceContent)
-      this.logger.success(`✓ Service ${serviceName} created in module ${moduleName}`)
+      this.logger.success(`✓ Service ${className} created in module ${moduleName}`)
     } catch (error) {
       this.logger.error(`Failed to create service: ${error.message}`)
       this.exitCode = 1
@@ -50,5 +60,11 @@ export default class ModuleMakeService extends BaseCommand {
       .replace(/([A-Z])/g, '_$1')
       .toLowerCase()
       .replace(/^_/, '')
+  }
+
+  private normalizeServiceBase(name: string): string {
+    // Remove existing "Service" suffix if present and normalize to PascalCase base
+    const withoutSuffix = name.replace(/Service$/i, '')
+    return this.toPascalCase(withoutSuffix)
   }
 }

@@ -1,4 +1,4 @@
-import { BaseCommand, flags } from '@adonisjs/core/ace'
+import { BaseCommand, args } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -7,13 +7,13 @@ export default class MakeModule extends BaseCommand {
   static commandName = 'make:module'
   static description = 'Create a new module with standard structure'
 
-  @flags.string({ description: 'Module name' })
+  @args.string({ description: 'Module name' })
   declare name: string
 
   static options: CommandOptions = {}
 
   async run() {
-    const moduleName = this.name || (await this.prompt.ask('Enter module name'))
+    const moduleName = this.name
     const modulePath = this.app.makePath('src', 'modules', moduleName)
 
     this.logger.info(`Creating module: ${moduleName}`)

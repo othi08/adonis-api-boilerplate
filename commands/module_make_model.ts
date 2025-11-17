@@ -9,7 +9,7 @@ export default class ModuleMakeModel extends BaseCommand {
   @args.string({ description: 'Module name' })
   declare module: string
 
-  @flags.string({ description: 'Model name' })
+  @args.string({ description: 'Model name' })
   declare name: string
 
   @flags.boolean({ description: 'Create migration' })
@@ -17,7 +17,12 @@ export default class ModuleMakeModel extends BaseCommand {
 
   async run() {
     const moduleName = this.module
-    const modelName = this.name || (await this.prompt.ask('Enter model name'))
+    const modelName = this.name
+    if (!modelName) {
+      this.logger.error('Model name is required. Use --name=<ModelName>')
+      this.exitCode = 1
+      return
+    }
     const modulePath = this.app.makePath('src', 'modules', moduleName)
 
     const modelContent = `import { DateTime } from 'luxon'
