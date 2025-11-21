@@ -1,6 +1,33 @@
 import { defineConfig } from '@adonisjs/core/app'
 
 export default defineConfig({
+  directories: {
+    config: 'config',
+    commands: 'commands',
+    contracts: 'contracts',
+    public: 'public',
+    providers: 'providers',
+    languageFiles: 'resources/lang',
+    migrations: 'src/shared/database/migrations',
+    seeders: 'src/shared/database/seeders',
+    factories: 'src/shared/database/factories',
+    views: 'resources/views',
+    start: 'start',
+    tmp: 'tmp',
+    tests: 'tests',
+    httpControllers: 'src/shared/controllers',
+    models: 'src/shared/models',
+    services: 'src/shared/services',
+    exceptions: 'src/shared/exceptions',
+    mailers: 'src/shared/mailers',
+    mails: 'src/shared/mails',
+    middleware: 'src/shared/middleware',
+    policies: 'src/shared/policies',
+    validators: 'src/shared/validators',
+    events: 'src/shared/events',
+    listeners: 'src/shared/listeners',
+    stubs: 'stubs',
+  },
   /*
   |--------------------------------------------------------------------------
   | Experimental flags

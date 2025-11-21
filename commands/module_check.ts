@@ -10,7 +10,7 @@ export default class ModuleCheck extends BaseCommand {
 
   async run() {
     const moduleManager = ModuleManager.getInstance()
-    await moduleManager.discoverModules()
+    await moduleManager.discoverModules({ log: true })
 
     const target = this.moduleName
     if (target) {

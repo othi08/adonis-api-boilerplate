@@ -1,6 +1,6 @@
 import { BaseCommand, args } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 export default class MakeModule extends BaseCommand {
@@ -111,6 +111,10 @@ import ${this.toPascalCase(moduleName)} from '#modules/${moduleName}/models/${mo
       await writeFile(join(modulePath, 'README.md'), readmeContent)
 
       this.logger.success(`✓ Module ${moduleName} created successfully!`)
+
+      // Ensure migrations path for this module is registered in config/database.ts
+      await this.ensureMigrationPathInConfig(moduleName)
+
       this.logger.info(`\nNext steps:`)
       this.logger.info(`  1. Create a model: node ace module:${moduleName} make:model`)
       this.logger.info(`  2. Create a controller: node ace module:${moduleName} make:controller`)
@@ -133,5 +137,38 @@ import ${this.toPascalCase(moduleName)} from '#modules/${moduleName}/models/${mo
       .split(/[-_]/)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join('')
+  }
+
+  private async ensureMigrationPathInConfig(moduleName: string): Promise<void> {
+    try {
+      const dbConfigPath = this.app.makePath('config', 'database.ts')
+      const content = await readFile(dbConfigPath, 'utf-8')
+
+      const modulePath = `src/modules/${moduleName}/database/migrations`
+
+      if (content.includes(modulePath)) {
+        return
+      }
+
+      const updated = content.replace(/paths:\s*\[(.*?)\n\s*\],/s, (match, inner: string) => {
+        if (inner.includes(modulePath)) return match
+        const insertion = `${inner}\n          '${modulePath}',`
+        return match.replace(inner, insertion)
+      })
+
+      if (updated === content) {
+        this.logger.warning(
+          'Could not automatically update config/database.ts with module migration path. Please add it manually.'
+        )
+        return
+      }
+
+      await writeFile(dbConfigPath, updated)
+      this.logger.info(`Added migrations path to config/database.ts: ${modulePath}`)
+    } catch (error) {
+      this.logger.warning(
+        `Failed to ensure module migrations path in config/database.ts: ${(error as Error).message}`
+      )
+    }
   }
 }

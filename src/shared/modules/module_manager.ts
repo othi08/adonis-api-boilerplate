@@ -44,7 +44,8 @@ export default class ModuleManager {
   /**
    * Découvrir et charger tous les modules
    */
-  async discoverModules(): Promise<void> {
+  async discoverModules(options: { log?: boolean } = {}): Promise<void> {
+    const shouldLog = options.log ?? false
     try {
       const moduleDirs = await readdir(this.modulesPath, { withFileTypes: true })
 
@@ -80,14 +81,18 @@ export default class ModuleManager {
             routesFile,
           })
 
-          console.info(`✓ Module discovered: ${moduleName}`)
+          if (shouldLog) {
+            console.info(`✓ Module discovered: ${moduleName}`)
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error)
           console.warn(`Module ${moduleName} has no valid config: ${message}`)
         }
       }
 
-      console.info(`Total modules discovered: ${this.modules.size}`)
+      if (shouldLog) {
+        console.info(`Total modules discovered: ${this.modules.size}`)
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       console.error(`Failed to discover modules: ${message}`)
@@ -179,7 +184,8 @@ export default class ModuleManager {
   /**
    * Charger les routes d'un module
    */
-  async loadModuleRoutes(moduleName: string): Promise<void> {
+  async loadModuleRoutes(moduleName: string, options: { log?: boolean } = {}): Promise<void> {
+    const shouldLog = options.log ?? false
     const module = this.modules.get(moduleName)
     if (!module || !module.routesFile) {
       return
@@ -193,7 +199,9 @@ export default class ModuleManager {
       // Importer dynamiquement les routes
       await import(module.routesFile)
       this.loadedModules.add(moduleName)
-      console.info(`✓ Routes loaded for module: ${moduleName}`)
+      if (shouldLog) {
+        console.info(`✓ Routes loaded for module: ${moduleName}`)
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       console.error(`Failed to load routes for module ${moduleName}: ${message}`)
@@ -203,12 +211,15 @@ export default class ModuleManager {
   /**
    * Charger toutes les routes dans l'ordre
    */
-  async loadAllRoutes(): Promise<void> {
+  async loadAllRoutes(options: { log?: boolean } = {}): Promise<void> {
+    const shouldLog = options.log ?? false
     const loadOrder = await this.getLoadOrder()
 
-    console.info('Loading module routes in order:')
+    if (shouldLog) {
+      console.info('Loading module routes in order:')
+    }
     for (const name of loadOrder) {
-      await this.loadModuleRoutes(name)
+      await this.loadModuleRoutes(name, { log: shouldLog })
     }
   }
 

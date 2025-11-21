@@ -27,14 +27,22 @@ export default class MigrateModules extends BaseCommand {
         this.logger.info(`  - ${migration}`)
       }
 
-      // Exécuter les migrations
-      await this.kernel.exec('migration:run', [`--files=${migrations.join(',')}`])
+      // NOTE: AdonisJS v6 "migration:run" does not support a "--files" flag.
+      // We currently delegate to the standard migrator, which will run all
+      // configured migrations. The ordered list above is informational.
+      await this.kernel.exec('migration:run', [])
     } else {
       this.logger.info('Running migrations for all modules...')
       await orchestrator.printMigrationOrder()
 
       const allMigrations = await orchestrator.getAllMigrations()
-      await this.kernel.exec('migration:run', [`--files=${allMigrations.join(',')}`])
+      for (const migration of allMigrations) {
+        this.logger.info(`  - ${migration}`)
+      }
+
+      // Same note as above: we call the standard migrator without attempting to
+      // pass a per-file list, since that is not a supported option.
+      await this.kernel.exec('migration:run', [])
     }
 
     this.logger.success('✓ Migrations completed')
